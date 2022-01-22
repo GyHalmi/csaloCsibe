@@ -13,53 +13,48 @@ namespace csaloCsibeFramew
 {
     public partial class Form1 : Form
     {
-      
-        CancellationTokenSource cts;
-        CancellationToken ctoken;
+        bool run;
+        Random rnd;
         public Form1()
         {
             InitializeComponent();
             btnStop.Enabled = false;
+            rnd = new Random();
         }
 
         private void btnStart_Click(object sender, EventArgs e)
         {
             btnStart.Enabled = false;
             btnStop.Enabled = true;
-            int shift = 20;
-            void moveLeft()
-            {
-                Cursor.Position = new Point(MousePosition.X + shift * -1, MousePosition.Y);
-            }
-            void moveRight()
-            {
-                Cursor.Position = new Point(MousePosition.X + shift, MousePosition.Y);
-            }
+            run = true;
 
-            cts = new CancellationTokenSource();
-            ctoken = cts.Token;
-           
-            Task.Run(async () =>
+            void mouseMove(int x, int y, int millisecs)
             {
-                int rep = 12;
-                do
+                int wait = 50;
+                millisecs = millisecs > wait ? millisecs : 1000;
+                int iteration = millisecs / wait;
+
+                for (int i = 0; i < iteration; i++)
                 {
-                    for (int i = 0; i < rep; i++)
-                    {
-                        moveRight();
-                        await Task.Delay(15);
-                    }
-                    await Task.Delay(1500);
-                    for (int i = 0; i < rep; i++)
-                    {
-                        moveLeft();
-                        await Task.Delay(15);
-                    }
-                    await Task.Delay(5000);
-
-                } while (!ctoken.IsCancellationRequested);
+                    Cursor.Position = new Point(MousePosition.X + x / iteration, MousePosition.Y + y / iteration);
+                    Thread.Sleep(iteration);
+                }
             }
-            );
+
+            Task.Run(() =>
+            {
+                while (run)
+                {
+                    int dist = 300;
+                    int time = rnd.Next(500, 2000);
+                    for (int i = 0; i < 5; i++)
+                    {
+                        mouseMove(rnd.Next(dist * -1, dist), rnd.Next(dist * -1, dist), time);
+
+                    }
+                    Thread.Sleep(5000);
+                }
+            });
 
         }
 
@@ -67,11 +62,9 @@ namespace csaloCsibeFramew
         {
             btnStop.Enabled = false;
             btnStart.Enabled = true;
-            
-            Task.Run(() => {
-                cts.Cancel();
-            });
-            
+
+            run = false;
+
         }
     }
 }
