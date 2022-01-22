@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -12,19 +13,19 @@ namespace csaloCsibeFramew
 {
     public partial class Form1 : Form
     {
-        Action action = () => { };
-        Task taskMoveMouse;
-
+      
+        CancellationTokenSource cts;
+        CancellationToken ctoken;
         public Form1()
         {
             InitializeComponent();
-            taskMoveMouse = new Task(action);
-
-
+            btnStop.Enabled = false;
         }
 
         private void btnStart_Click(object sender, EventArgs e)
         {
+            btnStart.Enabled = false;
+            btnStop.Enabled = true;
             int shift = 20;
             void moveLeft()
             {
@@ -35,10 +36,12 @@ namespace csaloCsibeFramew
                 Cursor.Position = new Point(MousePosition.X + shift, MousePosition.Y);
             }
 
-            taskMoveMouse = Task.Run(async () =>
+            cts = new CancellationTokenSource();
+            ctoken = cts.Token;
+           
+            Task.Run(async () =>
             {
                 int rep = 12;
-
                 do
                 {
                     for (int i = 0; i < rep; i++)
@@ -54,12 +57,21 @@ namespace csaloCsibeFramew
                     }
                     await Task.Delay(5000);
 
-                } while (true);
-
+                } while (!ctoken.IsCancellationRequested);
             }
             );
 
+        }
 
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            btnStop.Enabled = false;
+            btnStart.Enabled = true;
+            
+            Task.Run(() => {
+                cts.Cancel();
+            });
+            
         }
     }
 }
